@@ -45,3 +45,13 @@ Para aplicação na operação, conferir a configuração de LS/LIC/LY/FY/LX, as
 - Cadeia viva LIC/FIC/LY/FY/LX, matriz de restrição, histórico de eventos e relatório copiável.
 - Modelo de pressão-vazão usa raiz quadrada da pressão relativa como aproximação didática.
 - Nenhuma sintonia, intertravamento, sentido de ação ou faixa operacional real foi inferida como dado confirmado.
+
+## V3.3 — Navegação por assuntos (24/10/2026)
+- Leitura por capítulos sem efeito de âncora e sem rolagem automática através do material.
+- Índice pesquisável, abertura direta do capítulo, marcadores anterior/próximo e indicador de posição.
+- Interface do cabeçalho adaptada ao celular: seletor de assuntos em vez de faixa horizontal.
+- Alternância opcional para leitura contínua, mantendo todos os capítulos visíveis no formato original.
+- Links diretos `#dinamica`, `#nivel` etc. e histórico Voltar/Avançar do navegador preservados.
+- TODO O CONTEÚDO EXISTENTE e os dois simuladores V3 foram preservados.
+- Novos assets obrigatórios: `assets/navegacao.css` e `assets/navegacao.js`.
+- Versão de cache do service worker atualizada para V3.3.
