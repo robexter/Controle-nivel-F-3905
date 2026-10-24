@@ -1,3 +1,19 @@
+# F-3905 — Controle de Nível Concept V3.3.2
+
+## Correção de navegação (mobile e desktop)
+
+- Ao abrir, o aplicativo começa **sempre por assuntos**, inclusive se o modo contínuo tiver sido usado em uma sessão antiga.
+- O botão Assuntos e as setas Anterior/Próximo abrem diretamente o capítulo solicitado, sem efeito âncora.
+- O modo Conteúdo integral continua disponível somente quando selecionado.
+- Nenhum campo de pesquisa nem foco em teclado virtual.
+- A navegação fica incluída no próprio `index.html`: não depende de versões antigas de `assets/navegacao.js` no cache PWA.
+- Nova versão do cache e ativação automática do novo service worker.
+- A imagem da malha, os cinco pontos clicáveis, treze capítulos, simulações, questionários e demais recursos permanecem preservados.
+
+Publique o **conteúdo interno** do arquivo ZIP na raiz do repositório GitHub Pages. Para evitar versões misturadas, substitua index.html, manifest.webmanifest e service-worker.js simultaneamente.
+
+---
+
 # F-3905 — Controle de Nível Concept
 
 Módulo **one-page/PWA** com conteúdo técnico integral e simulação matemática interativa da malha do F-3905.

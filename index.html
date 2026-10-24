@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="reader-topic">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -328,7 +328,7 @@ END</pre></div>
 </div></section>
 <div id="reader-pager" class="reader-pager wrap" hidden aria-label="Continuar leitura"><button type="button" id="reader-bottom-prev">← Assunto anterior</button><span id="reader-bottom-position" aria-live="polite">1 de 13</span><button type="button" id="reader-bottom-next">Próximo assunto →</button></div>
 </main>
-<footer class="footer"><div class="wrap footer-grid"><div><strong>F-3905 — Controle de Nível Concept V3.1</strong><p class="small" style="margin-top:8px">Módulo one-page com conteúdo integral, diagrama de referência, simulação MIN/MAX, dinâmica de controle e avaliação técnica. Desenvolvido para estudo e interpretação de malhas de controle da U-39.</p></div><div><strong>Operação offline</strong><p class="small" style="margin-top:8px">Pode ser instalado como aplicativo em navegadores compatíveis via HTTPS. O botão de atualização permite consultar versões novas publicadas no GitHub Pages.</p><span class="note" id="version-line">Versão: 3.1 • 24/10/2026</span></div></div></footer>
+<footer class="footer"><div class="wrap footer-grid"><div><strong>F-3905 — Controle de Nível Concept V3.3.2</strong><p class="small" style="margin-top:8px">Módulo one-page com conteúdo integral, diagrama de referência, simulação MIN/MAX, dinâmica de controle e avaliação técnica. Desenvolvido para estudo e interpretação de malhas de controle da U-39.</p></div><div><strong>Operação offline</strong><p class="small" style="margin-top:8px">Pode ser instalado como aplicativo em navegadores compatíveis via HTTPS. O botão de atualização permite consultar versões novas publicadas no GitHub Pages.</p><span class="note" id="version-line">Versão: 3.3.2 • 24/10/2026</span></div></div></footer>
 <button id="to-top" class="float-top" type="button" aria-label="Voltar ao início">↑</button>
 
 <dialog class="reader-dialog" id="reader-index-dialog" aria-labelledby="reader-dialog-title">
@@ -403,6 +403,181 @@ $('update-check').addEventListener('click',async()=>{if(!swRegistration){$('dial
 })();
 </script>
 <script src="./assets/dinamica.js" defer></script>
-<script src="./assets/navegacao.js" defer></script>
+<script>
+/* F-3905 — Navegação estável V3.3.2.
+ * A navegação é inicializada junto com o HTML para evitar versões desencontradas em PWA.
+ * O modo padrão é sempre "Por assuntos". Sem rolagem por âncora e sem campos de busca.
+ */
+(()=>{'use strict';
+  const $=id=>document.getElementById(id);
+  const main=$('inicio');
+  const nav=$('navlinks');
+  const dialog=$('reader-index-dialog');
+  const picker=$('reader-topic-list');
+  const arrows=['reader-prev','reader-next','reader-bottom-prev','reader-bottom-next'];
+  if(!main||!nav||!dialog||!picker||arrows.some(id=>!$(id))){
+    console.error('F-3905: não foi possível iniciar a navegação — elementos ausentes.');
+    return;
+  }
+  const navButtons=[...nav.querySelectorAll('button[data-topic]')];
+  const sections=[...main.querySelectorAll(':scope > section.chapter')];
+  const intro=main.querySelector(':scope > .wrap:first-child');
+  const topics=navButtons.map((btn,i)=>({
+    id:btn.dataset.topic,
+    short:btn.textContent.trim(),
+    name:$(btn.dataset.topic)?.querySelector('h2')?.textContent.trim()||btn.textContent.trim(),
+    n:i+1
+  })).filter(t=>sections.some(s=>s.id===t.id));
+  const topicIds=new Set(topics.map(t=>t.id));
+  const entries=[{id:'inicio',short:'Visão geral',name:'Apresentação, objetivos e indicadores',n:0},...topics];
+  let active='inicio';
+  let continuous=false;
+  function sectionGroup(n){return n<=3?'Conhecer a malha':n<=7?'Estratégias de controle':n<=9?'Simulações':'Diagnóstico e aprendizado';}
+  function makeList(container){
+    if(!container) return;
+    container.replaceChildren();
+    let prev='';
+    for(const item of entries){
+      const group=item.n?sectionGroup(item.n):'Início';
+      if(group!==prev){
+        const label=document.createElement('div'); label.className='reader-list-group'; label.textContent=group;
+        container.appendChild(label); prev=group;
+      }
+      const button=document.createElement('button');
+      button.type='button'; button.className='reader-topic-item'; button.dataset.topic=item.id;
+      const number=document.createElement('span'); number.className='reader-topic-num'; number.textContent=item.n?String(item.n).padStart(2,'0'):'⌂';
+      const copy=document.createElement('span'); copy.className='reader-topic-copy';
+      const title=document.createElement('strong'); title.textContent=item.short;
+      const sub=document.createElement('small'); sub.textContent=item.name;
+      copy.append(title,sub);
+      const arrow=document.createElement('span'); arrow.textContent='›'; arrow.setAttribute('aria-hidden','true');
+      button.append(number,copy,arrow);
+      container.append(button);
+    }
+  }
+  function updateHighlights(){
+    navButtons.forEach(button=>{
+      const current=button.dataset.topic===active;
+      button.classList.toggle('current',current);
+      if(current) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
+    });
+    document.querySelectorAll('.reader-topic-item').forEach(button=>{
+      if(button.dataset.topic===active) button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
+  }
+  function updateView(){
+    const byTopic=!continuous;
+    document.documentElement.classList.toggle('reader-topic',byTopic);
+    document.documentElement.classList.toggle('reader-continuous',continuous);
+    // Visibilidade explícita: não depender apenas da classe do CSS no navegador móvel.
+    sections.forEach(section=>{
+      const selected=byTopic&&section.id===active;
+      section.classList.toggle('reader-active',selected);
+      section.hidden=byTopic&&!selected;
+      section.style.display=section.hidden?'none':'';
+    });
+    if(intro){intro.hidden=byTopic&&active!=='inicio';intro.style.display=intro.hidden?'none':'';}
+    const number=Math.max(0,topics.findIndex(t=>t.id===active)+1);
+    const last=topics.length;
+    $('reader-selected-title').textContent=entries.find(e=>e.id===active)?.short||'Visão geral';
+    $('reader-position').textContent=String(number).padStart(2,'0')+'/'+last;
+    $('reader-bottom-position').textContent=number+' de '+last;
+    $('reader-prev').disabled=number===0;
+    $('reader-next').disabled=number===last;
+    $('reader-bottom-prev').disabled=number<=1;
+    $('reader-bottom-next').disabled=number===last;
+    $('reader-pager').hidden=continuous||number===0;
+    $('reader-topic-mode').setAttribute('aria-pressed',String(byTopic));
+    $('reader-full-mode').setAttribute('aria-pressed',String(continuous));
+    $('reader-mode-toggle').setAttribute('aria-pressed',String(continuous));
+    $('reader-mode-toggle').textContent=continuous?'▤ Por assuntos':'☷ Leitura contínua';
+    updateHighlights();
+    if(active==='dinamica') window.dispatchEvent(new Event('resize'));
+  }
+  function withoutSmoothScroll(){
+    const root=document.documentElement;
+    const old=root.style.scrollBehavior;
+    root.style.setProperty('scroll-behavior','auto','important');
+    window.scrollTo(0,0);
+    root.style.scrollBehavior=old;
+  }
+  function selectTopic(id,push){
+    if(id!=='inicio'&&!topicIds.has(id)) id='inicio';
+    active=id;
+    continuous=false; // selecionar um tema NUNCA reabre a leitura contínua.
+    updateView();
+    if(dialog.open) dialog.close();
+    if(push){
+      const url=new URL(location.href);
+      url.hash=''; // elimina a âncora e seu deslizamento pelo navegador.
+      if(id==='inicio') url.searchParams.delete('assunto');
+      else url.searchParams.set('assunto',id);
+      history.pushState({topic:id},'',url);
+    }
+    withoutSmoothScroll();
+  }
+  function setContinuous(value){
+    continuous=!!value;
+    if(dialog.open) dialog.close();
+    updateView();
+    withoutSmoothScroll();
+  }
+  function shift(delta){
+    const current=topics.findIndex(t=>t.id===active);
+    const next=Math.max(-1,Math.min(topics.length-1,current+delta));
+    selectTopic(next<0?'inicio':topics[next].id,true);
+  }
+  function openIndex(){
+    updateHighlights();
+    if(typeof dialog.showModal==='function') dialog.showModal();
+    else dialog.setAttribute('open','');
+    // Sem focus() em input — não abrir teclado virtual.
+  }
+  function dock(){
+    if($('reader-sidebar-dock')) return;
+    const aside=document.createElement('aside');
+    aside.id='reader-sidebar-dock'; aside.className='reader-sidebar-dock';
+    const panel=document.createElement('div');panel.className='reader-sidebar-card';
+    panel.innerHTML='<div class="reader-sidebar-head"><div class="reader-eyebrow">PAINEL TÉCNICO</div><h2>Assuntos do Concept</h2><p>Escolha o capítulo diretamente. O conteúdo está integralmente preservado.</p></div>';
+    const list=document.createElement('div');list.id='reader-sidebar-list';list.className='reader-topic-list reader-topic-list--sidebar';
+    panel.appendChild(list);aside.appendChild(panel);
+    main.insertBefore(aside,sections[0]);
+    makeList(list);
+  }
+  // Delegação única: evita cliques duplicados nos botões criados dinamicamente.
+  document.addEventListener('click',event=>{
+    const target=event.target.closest('[data-topic], a[href^="#"]');
+    if(!target) return;
+    const topic=target.dataset.topic || (target.tagName==='A'?target.getAttribute('href').slice(1):null);
+    if(topic!=='inicio'&&!topicIds.has(topic)) return;
+    event.preventDefault();
+    if(target.id==='reader-open-index') return;
+    const infoDialog=$('info-dialog');
+    if(infoDialog?.open) infoDialog.close();
+    selectTopic(topic,true);
+  });
+  $('reader-open-index').addEventListener('click',openIndex);
+  $('reader-close-index').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  $('reader-prev').addEventListener('click',()=>shift(-1));
+  $('reader-next').addEventListener('click',()=>shift(1));
+  $('reader-bottom-prev').addEventListener('click',()=>shift(-1));
+  $('reader-bottom-next').addEventListener('click',()=>shift(1));
+  $('reader-topic-mode').addEventListener('click',()=>selectTopic(active,false));
+  $('reader-full-mode').addEventListener('click',()=>setContinuous(true));
+  $('reader-mode-toggle').addEventListener('click',()=>setContinuous(!continuous));
+  window.addEventListener('popstate',()=>{
+    const url=new URL(location.href);
+    selectTopic(url.searchParams.get('assunto')||decodeURIComponent(url.hash.slice(1))||'inicio',false);
+  });
+  makeList(picker);dock();
+  // Toda abertura inicia em modo por assuntos; nunca restaurar o antigo modo contínuo.
+  try{sessionStorage.removeItem('f3905-reading-mode');}catch(e){}
+  const url=new URL(location.href);
+  selectTopic(url.searchParams.get('assunto')||decodeURIComponent(url.hash.slice(1))||'inicio',false);
+})();
+
+</script>
 </body>
 </html>

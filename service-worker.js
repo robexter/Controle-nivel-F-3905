@@ -1,8 +1,8 @@
 /* Incrementar CACHE_VERSION sempre que publicar uma alteração. */
-const CACHE_VERSION = 'f3905-concept-v3.3.1-20261024';
+const CACHE_VERSION = 'f3905-concept-v3.3.2-20261024';
 const CORE = ['./', './index.html', './manifest.webmanifest', './assets/diagrama-f3905-original.png', './assets/dinamica.css', './assets/dinamica.js', './assets/navegacao.css', './assets/navegacao.js', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(CORE)));
+  event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
