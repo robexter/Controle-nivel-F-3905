@@ -19,9 +19,8 @@ const entries=[{id:'inicio',n:0,name:'Apresentação, objetivos e indicadores',s
 function ensureSidebar(){
   if($('reader-sidebar-dock')) return;
   const dock=document.createElement('aside'); dock.id='reader-sidebar-dock'; dock.className='reader-sidebar-dock';
-  dock.innerHTML=`<div class="reader-sidebar-card"><div class="reader-sidebar-head"><div class="reader-eyebrow">PAINEL TÉCNICO</div><h2>Assuntos do Concept</h2><p>Acesse qualquer capítulo sem rolagem longa. O conteúdo permanece integral.</p></div><label class="reader-search-label" for="reader-sidebar-search">Buscar assunto</label><input id="reader-sidebar-search" class="reader-search" type="search" placeholder="Ex.: LIC-151C, MIN, dinâmica, CIC"><div id="reader-sidebar-list" class="reader-topic-list reader-topic-list--sidebar"></div><div id="reader-sidebar-empty" class="reader-empty" hidden>Nenhum assunto encontrado.</div></div>`;
+  dock.innerHTML=`<div class="reader-sidebar-card"><div class="reader-sidebar-head"><div class="reader-eyebrow">PAINEL TÉCNICO</div><h2>Assuntos do Concept</h2><p>Acesse qualquer capítulo sem rolagem longa. O conteúdo permanece integral.</p></div><div id="reader-sidebar-list" class="reader-topic-list reader-topic-list--sidebar"></div></div>`;
   main.insertBefore(dock, sections[0]||$('reader-pager'));
-  $('reader-sidebar-search').addEventListener('input',renderLists);
 }
 function renderList(containerId, filter, emptyId){
   const container=$(containerId); if(!container) return; container.replaceChildren(); let last='', shown=0;
@@ -35,7 +34,7 @@ function renderList(containerId, filter, emptyId){
     b.addEventListener('click',()=>{if(dialog?.open) dialog.close(); select(t.id,{push:true,focus:true});}); container.append(b); shown++;});
   if($(emptyId)) $(emptyId).hidden=shown!==0;
 }
-function renderLists(){ renderList('reader-topic-list', normalize($('reader-search')?.value || ''), 'reader-search-empty'); renderList('reader-sidebar-list', normalize($('reader-sidebar-search')?.value || ''), 'reader-sidebar-empty'); }
+function renderLists(){ renderList('reader-topic-list', '', null); renderList('reader-sidebar-list', '', null); }
 function title(id){return id==='inicio'?'Visão geral':topics.find(t=>t.id===id)?.short||'Visão geral'}
 function index(id){return topics.findIndex(t=>t.id===id)}
 function syncMode(){ document.documentElement.classList.toggle('reader-topic',!continuous); document.documentElement.classList.toggle('reader-continuous',continuous); $('reader-topic-mode').setAttribute('aria-pressed',String(!continuous)); $('reader-full-mode').setAttribute('aria-pressed',String(continuous)); $('reader-mode-toggle').setAttribute('aria-pressed',String(continuous)); $('reader-mode-toggle').textContent=continuous?'▤ Por assuntos':'☷ Leitura contínua'; $('reader-pager').hidden=continuous||active==='inicio'; }
@@ -48,9 +47,9 @@ function select(id,options={}){ if(id!=='inicio'&&!ids.has(id)) id='inicio'; act
 function setMode(continuousMode){ continuous=continuousMode; syncMode(); select(active); try{sessionStorage.setItem('f3905-reading-mode',continuous?'continuous':'topic')}catch(e){} }
 function shift(delta){ let n=index(active); n=Math.max(-1,Math.min(topics.length-1,n+delta)); select(n<0?'inicio':topics[n].id,{push:true,focus:true}); }
 ensureSidebar();
-$('reader-open-index').addEventListener('click',()=>{ $('reader-search').value=''; renderLists(); dialog.showModal(); $('reader-search').focus(); });
+$('reader-open-index').addEventListener('click',()=>{ renderLists(); dialog.showModal(); });
 $('reader-close-index').addEventListener('click',()=>dialog.close()); dialog.addEventListener('click',ev=>{ if(ev.target===dialog) dialog.close(); });
-$('reader-search').addEventListener('input',renderLists); $('reader-topic-mode').addEventListener('click',()=>setMode(false)); $('reader-full-mode').addEventListener('click',()=>setMode(true)); $('reader-mode-toggle').addEventListener('click',()=>setMode(!continuous)); $('reader-prev').addEventListener('click',()=>shift(-1)); $('reader-next').addEventListener('click',()=>shift(1)); $('reader-bottom-prev').addEventListener('click',()=>shift(-1)); $('reader-bottom-next').addEventListener('click',()=>shift(1));
+$('reader-topic-mode').addEventListener('click',()=>setMode(false)); $('reader-full-mode').addEventListener('click',()=>setMode(true)); $('reader-mode-toggle').addEventListener('click',()=>setMode(!continuous)); $('reader-prev').addEventListener('click',()=>shift(-1)); $('reader-next').addEventListener('click',()=>shift(1)); $('reader-bottom-prev').addEventListener('click',()=>shift(-1)); $('reader-bottom-next').addEventListener('click',()=>shift(1));
 document.querySelectorAll('[data-topic]').forEach(el=>{ el.addEventListener('click',ev=>{ ev.preventDefault(); select(el.dataset.topic,{push:true,focus:true}); }); });
 window.addEventListener('popstate',()=>select(decodeURIComponent(location.hash.slice(1))||'inicio'));
 try{continuous=sessionStorage.getItem('f3905-reading-mode')==='continuous'}catch(e){}
